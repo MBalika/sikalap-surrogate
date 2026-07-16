@@ -1,0 +1,44 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- Adatok (a valódi PLAXIS-adat NEM kerül verziókövetésbe) ---
+data/raw/
+data/processed/
+data/checkpoints/
+*.plaxis
+*.p2dx
+# KIVÉTEL: a smoke-fixture szándékosan bekerül (kicsi, jelölt, nem fizikai):
+!data/fixture/
+!data/fixture/**
+
+# --- Modell-artefaktok ---
+models/*.json
+models/*.pkl
+models/*.ubj
+!models/.gitkeep
+
+# --- Export (generált JS a modellből) ---
+# A deployhoz KELLŐ artefaktokat verziókövetjük (a Vercel nem futtatja a pipeline-t),
+# a redundáns egyedi modell-fájlokat (a bundle.js már tartalmazza) NEM.
+web/models/*.js
+!web/models/.gitkeep
+!web/models/bundle.js
+!web/models/parity_cases.js
+
+# --- Belső tervező-dokumentumok (ne kerüljenek esetleg publikus repóba) ---
+*.docx
+~$*.docx
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+*.log

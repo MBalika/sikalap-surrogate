@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Síkalap surrogate — teherbírás és süllyedés</title>
+<style>
+  :root{
+    --bg:#f4f6fa; --panel:#ffffff; --ink:#1b2330; --muted:#5b6675;
+    --line:rgba(20,30,50,.12); --accent:#3b82f6; --ok:#16a34a; --warn:#d97706;
+    --shadow:0 1px 3px rgba(20,30,50,.08),0 8px 24px rgba(20,30,50,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f141b; --panel:#161c26; --ink:#e7e9ee; --muted:#9aa6b6;
+      --line:rgba(255,255,255,.12); --shadow:0 1px 3px rgba(0,0,0,.4); }
+  }
+  :root[data-theme="light"]{ --bg:#f4f6fa; --panel:#fff; --ink:#1b2330; --muted:#5b6675; --line:rgba(20,30,50,.12); }
+  :root[data-theme="dark"]{ --bg:#0f141b; --panel:#161c26; --ink:#e7e9ee; --muted:#9aa6b6; --line:rgba(255,255,255,.12); }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  header{padding:22px 22px 10px;max-width:1180px;margin:0 auto;}
+  h1{font-size:1.5rem;margin:0 0 4px;}
+  .sub{color:var(--muted);margin:0 0 10px;}
+  .disclaimer{background:color-mix(in srgb,var(--warn) 14%,var(--panel));
+    border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);
+    color:var(--ink);border-radius:10px;padding:9px 13px;font-size:.9rem;margin:8px 0 0;}
+  main{max-width:1180px;margin:0 auto;padding:14px 22px 40px;
+    display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:20px;}
+  @media (max-width:840px){ main{grid-template-columns:1fr;} }
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:16px;box-shadow:var(--shadow);}
+  .panel h2{font-size:1.02rem;margin:0 0 12px;}
+
+  .ctrl{margin-bottom:15px;}
+  .ctrl label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:5px;}
+  .ctrl-name{font-size:.9rem;color:var(--muted);}
+  .ctrl-val{font-variant-numeric:tabular-nums;font-weight:600;}
+  .ctrl input[type=range]{width:100%;accent-color:var(--accent);}
+  .ctrl-range{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:2px;}
+  .ctrl.soil{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+  .soil-btns{display:flex;gap:8px;}
+  .soil-btn{flex:1;padding:8px;border:1px solid var(--line);background:transparent;color:var(--ink);
+    border-radius:9px;cursor:pointer;font-size:.92rem;text-transform:capitalize;transition:.15s;}
+  .soil-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+  @media (max-width:560px){ .kpis{grid-template-columns:repeat(2,1fr);} }
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;}
+  .kpi-lab{font-size:.76rem;color:var(--muted);margin-bottom:4px;}
+  .kpi-val{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;}
+  .kpi-unit{font-size:.8rem;color:var(--muted);font-weight:400;}
+  .kpi-val.ok{color:var(--ok);} .kpi-val.warn{color:var(--warn);}
+
+  canvas{width:100%;height:380px;display:block;}
+  #fieldCanvas{height:420px;border-radius:10px;overflow:hidden;}
+  .field-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
+  .seg-btn{padding:7px 12px;border:0;background:transparent;color:var(--ink);cursor:pointer;font-size:.86rem;}
+  .seg-btn.active{background:var(--accent);color:#fff;}
+  .loadctrl{margin-top:12px;}
+  .loadctrl label{display:block;font-size:.86rem;color:var(--muted);margin-bottom:5px;}
+  .loadctrl output{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .loadctrl input[type=range]{width:100%;accent-color:#ef4444;}
+  .field-note{font-size:.8rem;color:var(--muted);margin:12px 0 0;}
+  .playbar{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;}
+  .play{padding:9px 16px;border:0;border-radius:10px;background:#ef4444;color:#fff;
+    font-size:.92rem;font-weight:600;cursor:pointer;transition:.15s;}
+  .play:hover{filter:brightness(1.07);}
+  .play.playing{background:#d97706;}
+  .ghost{padding:9px 12px;border:1px solid var(--line);background:transparent;color:var(--ink);
+    border-radius:10px;cursor:pointer;font-size:1rem;line-height:1;}
+  .readout{font-size:.86rem;color:var(--muted);}
+  .readout b{color:var(--ink);font-variant-numeric:tabular-nums;}
+  .legend{display:flex;gap:16px;font-size:.82rem;color:var(--muted);margin-top:8px;flex-wrap:wrap;}
+  .legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+  .selftest{font-size:.78rem;color:var(--muted);margin-top:12px;}
+  .selftest.ok{color:var(--ok);} .selftest.warn{color:var(--warn);}
+  footer{max-width:1180px;margin:0 auto;padding:0 22px 30px;color:var(--muted);font-size:.82rem;}
+
+  /* Magyar tipográfia — kiegyensúlyozott, olvasható tördelés */
+  body{text-wrap:pretty}
+  p,li,figcaption,blockquote,dd,.sub,.disclaimer,.ctrl-name{text-wrap:pretty;hyphens:none}
+  h1,h2,h3,h4{text-wrap:balance}
+  .nowrap{white-space:nowrap}
+</style>
+</head>
+<body>
+<header>
+  <h1>Síkalap surrogate — teherbírás és süllyedés</h1>
+  <p class="sub">Állítsd a paramétereket csúszkákkal, és a böngészőben futó gépi tanulásos (XGBoost) helyettesítő modell azonnal becsli a törőterhet, a süllyedést és a terhelés–süllyedés görbét.</p>
+  <p class="disclaimer">⚠ Demó-állapot: a jelenlegi modellek <b>mock (nem valódi PLAXIS)</b> adatból tanultak, kizárólag a rendszer működésének bemutatására. A valódi PLAXIS 2D HSsmall adat érkezésekor a becslések fizikailag helytállóvá válnak — a felület nem változik.</p>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Bemenetek</h2>
+    <div id="controls"></div>
+    <div id="selftest" class="selftest">önteszt…</div>
+  </section>
+
+  <section>
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-lab">Törőteher (surrogate)</div>
+        <div class="kpi-val"><span id="out_Rk">–</span> <span class="kpi-unit">kN/m</span></div></div>
+      <div class="kpi"><div class="kpi-lab">Süllyedés a törésnél</div>
+        <div class="kpi-val"><span id="out_smax">–</span> <span class="kpi-unit">mm</span></div></div>
+      <div class="kpi"><div class="kpi-lab">EC7 zárt képlet</div>
+        <div class="kpi-val"><span id="out_ec7">–</span> <span class="kpi-unit">kN/m</span></div></div>
+      <div class="kpi"><div class="kpi-lab">Eltérés (ML − EC7)</div>
+        <div class="kpi-val" id="out_diff">–</div></div>
+    </div>
+    <div class="panel">
+      <h2>Terhelés–süllyedés görbe</h2>
+      <canvas id="psCanvas"></canvas>
+      <div class="legend">
+        <span><i style="background:#3b82f6"></i>Surrogate (ML)</span>
+        <span><i style="background:#ef4444"></i>EC7 törőteher</span>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:20px">
+      <div class="field-head">
+        <h2 style="margin:0">Metszet — deformáció és alakváltozás</h2>
+        <div class="seg" id="fieldMode">
+          <button type="button" class="seg-btn active" data-mode="disp">Elmozdulás</button>
+          <button type="button" class="seg-btn" data-mode="shear">Nyírásalakváltozás</button>
+        </div>
+      </div>
+      <canvas id="fieldCanvas"></canvas>
+      <div class="playbar">
+        <button type="button" id="playBtn" class="play">▶ Törési folyamat lejátszása</button>
+        <button type="button" id="resetBtn" class="ghost" title="Vissza nullára">⟲</button>
+        <div class="readout nowrap">
+          teher: <b id="ro_p">0</b> kN/m · süllyedés: <b id="ro_s">0,0</b> mm · <b id="ro_pct">0 %</b>
+        </div>
+      </div>
+      <div class="loadctrl">
+        <label for="loadSlider" class="nowrap">Teher-szint (kézi): <output id="loadVal">100 %</output></label>
+        <input type="range" id="loadSlider" min="0" max="100" step="1" value="100">
+      </div>
+      <p class="field-note">Szemléltető mező (nem valódi végeselemes eredmény): a valós B/D geometriára a surrogate süllyedéséből, illetve a Prandtl-féle törőmechanizmusból származtatva. A süllyedés a láthatóság miatt nagyítva.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  PLAXIS surrogate oktatóeszköz · a modell a böngészőben fut, adat nem hagyja el a gépet · <span class="nowrap">v0.1 demó</span>
+</footer>
+
+<!-- Modell-bundle (22 modell + manifest) és paritás-esetek, majd a logika -->
+<script src="models/bundle.js"></script>
+<script src="models/parity_cases.js"></script>
+<script src="ec7.js"></script>
+<script src="chart.js"></script>
+<script src="field.js"></script>
+<script src="app.js"></script>
+
+<!-- Magyar tipográfia — automatikus sortörés-szabályok -->
+<script>
+(function(){
+  "use strict";
+  var NBSP=' ', WJ='⁠';
+  function math(s){ return s.replace(/ (?=[=+−·×<>≈≥≤≠\/])/g,NBSP).replace(/([=+−·×<>≈≥≤≠\/]) /g,'$1'+NBSP); }
+  function units(s){ return s.replace(/(\d) (?=(?:kPa|MPa|GPa|kN\/m³|kN\/m²|kN|m³|m²|m\/s|cm|mm|km|kg|°C|°|%|m|t|óra|nap|hét|hónap|év)(?:[\s.,;:!?)\]–—]|$))/g,'$1'+NBSP); }
+  function shortWords(s){ return s.replace(/(^|[\s(„"'»–—])(a|az|s|e|é|és|is)(?: )(?=\S)/gi,'$1$2'+NBSP); }
+  function dashes(s){ return s.replace(/([0-9A-Za-zÀ-ſ])([-–—])([0-9A-Za-zÀ-ſ])/g,'$1'+WJ+'$2'+WJ+'$3'); }
+  function sentenceStart(s){ return s.replace(/([.!?…][)"'»”’]?\s+\S+) (?=\S)/g,'$1'+NBSP); }
+  function fix(s){ return dashes(units(math(shortWords(sentenceStart(s))))); }
+  var SKIP={SCRIPT:1,STYLE:1,CODE:1,PRE:1,KBD:1,SAMP:1,INPUT:1,TEXTAREA:1,SELECT:1,OPTION:1,NOSCRIPT:1};
+  function walk(el){
+    for(var n=el.firstChild;n;n=n.nextSibling){
+      if(n.nodeType===3){ var t=n.nodeValue; if(t&&/\S/.test(t)){ var nt=fix(t); if(nt!==t) n.nodeValue=nt; } }
+      else if(n.nodeType===1){ var tag=n.tagName?n.tagName.toUpperCase():''; if(SKIP[tag])continue;
+        if(n.namespaceURI==='http://www.w3.org/2000/svg')continue;
+        if(n.classList&&n.classList.contains('nowrap'))continue; if(n.isContentEditable)continue; walk(n); }
+    }
+  }
+  window.__typo=function(el){ el=el||document.body; if(!el)return; walk(el); };
+  function run(){ window.__typo(document.body); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run); else run();
+})();
+</script>
+</body>
+</html>

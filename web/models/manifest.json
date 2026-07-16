@@ -1,0 +1,178 @@
+{
+  "feature_order": [
+    "B",
+    "D",
+    "phi",
+    "c",
+    "gamma",
+    "E",
+    "GWL",
+    "alpha",
+    "soil_homok",
+    "soil_iszap",
+    "soil_agyag"
+  ],
+  "continuous_keys": [
+    "B",
+    "D",
+    "phi",
+    "c",
+    "gamma",
+    "E",
+    "GWL",
+    "alpha"
+  ],
+  "inputs_meta": [
+    {
+      "key": "B",
+      "jel": "B",
+      "nev": "Alapszélesség",
+      "egyseg": "m",
+      "min": 0.5,
+      "max": 4.0
+    },
+    {
+      "key": "D",
+      "jel": "D",
+      "nev": "Alapsík mélysége",
+      "egyseg": "m",
+      "min": 0.4,
+      "max": 3.0
+    },
+    {
+      "key": "phi",
+      "jel": "φ'",
+      "nev": "Belső súrlódási szög",
+      "egyseg": "°",
+      "min": 20.0,
+      "max": 38.0
+    },
+    {
+      "key": "c",
+      "jel": "c'",
+      "nev": "Kohézió",
+      "egyseg": "kPa",
+      "min": 0.0,
+      "max": 40.0
+    },
+    {
+      "key": "gamma",
+      "jel": "γ",
+      "nev": "Térfogatsúly",
+      "egyseg": "kN/m³",
+      "min": 16.0,
+      "max": 21.0
+    },
+    {
+      "key": "E",
+      "jel": "E' (=E₅₀ʳᵉᶠ)",
+      "nev": "Rugalmassági modulus, referencia szekáns @100 kPa",
+      "egyseg": "MPa",
+      "min": 5.0,
+      "max": 60.0
+    },
+    {
+      "key": "GWL",
+      "jel": "GWL",
+      "nev": "Talajvízszint mélysége a terepszinttől",
+      "egyseg": "m",
+      "min": 0.5,
+      "max": 8.0
+    },
+    {
+      "key": "alpha",
+      "jel": "α",
+      "nev": "Teherferdeség a függőlegestől",
+      "egyseg": "°",
+      "min": 0.0,
+      "max": 25.0
+    }
+  ],
+  "soil_type_values": [
+    "homok",
+    "iszap",
+    "agyag"
+  ],
+  "soil_meta": {
+    "key": "soil_type",
+    "jel": "Talajtípus",
+    "nev": "Talaj fő típusa (a korrelációs kaszkádot ez vezérli)",
+    "values": [
+      "homok",
+      "iszap",
+      "agyag"
+    ]
+  },
+  "output_scalars": [
+    "R_k",
+    "s_max"
+  ],
+  "output_ps": [
+    "ps_01",
+    "ps_02",
+    "ps_03",
+    "ps_04",
+    "ps_05",
+    "ps_06",
+    "ps_07",
+    "ps_08",
+    "ps_09",
+    "ps_10",
+    "ps_11",
+    "ps_12",
+    "ps_13",
+    "ps_14",
+    "ps_15",
+    "ps_16",
+    "ps_17",
+    "ps_18",
+    "ps_19",
+    "ps_20"
+  ],
+  "ps_load_fractions": [
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8,
+    0.85,
+    0.9,
+    0.95,
+    1.0
+  ],
+  "model_files": {
+    "R_k": "models/R_k.js",
+    "s_max": "models/s_max.js",
+    "ps_01": "models/ps_01.js",
+    "ps_02": "models/ps_02.js",
+    "ps_03": "models/ps_03.js",
+    "ps_04": "models/ps_04.js",
+    "ps_05": "models/ps_05.js",
+    "ps_06": "models/ps_06.js",
+    "ps_07": "models/ps_07.js",
+    "ps_08": "models/ps_08.js",
+    "ps_09": "models/ps_09.js",
+    "ps_10": "models/ps_10.js",
+    "ps_11": "models/ps_11.js",
+    "ps_12": "models/ps_12.js",
+    "ps_13": "models/ps_13.js",
+    "ps_14": "models/ps_14.js",
+    "ps_15": "models/ps_15.js",
+    "ps_16": "models/ps_16.js",
+    "ps_17": "models/ps_17.js",
+    "ps_18": "models/ps_18.js",
+    "ps_19": "models/ps_19.js",
+    "ps_20": "models/ps_20.js"
+  }
+}

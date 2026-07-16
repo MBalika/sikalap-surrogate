@@ -1,0 +1,9 @@
+# A bundle.js már tartalmazza mind a 22 modellt + a manifestet, ezért az egyedi
+# modell-fájlok és a különálló .json-ok NEM kellenek a deployhoz (az index.html
+# csak a bundle.js-t és a parity_cases.js-t tölti be).
+models/ps_*.js
+models/R_k.js
+models/s_max.js
+models/manifest.json
+models/parity_cases.json
+models/.gitkeep

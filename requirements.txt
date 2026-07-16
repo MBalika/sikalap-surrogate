@@ -1,0 +1,29 @@
+# PLAXIS surrogate — Python függőségek
+# Telepítés (miután a Python fent van):  py -m pip install -r requirements.txt
+#
+# Python-verzió ajánlás: 3.11 vagy 3.12 (a plxscripting ehhez illeszkedik jól).
+
+# --- Alap adat/tudomány ---
+numpy>=1.26
+pandas>=2.1
+scipy>=1.11
+pyyaml>=6.0
+
+# --- ML ---
+scikit-learn>=1.4
+xgboost>=2.0
+optuna>=3.6          # hiperparaméter-hangolás (később)
+shap>=0.45           # feature-fontosság (később)
+
+# --- Export böngészőbe ---
+m2cgen>=0.10         # a betanított modellt tiszta JS-re fordítja
+
+# --- Mintavételezés ---
+# (a Latin Hypercube-ot scipy.stats.qmc adja, külön csomag nem kell)
+
+# --- Teszt ---
+pytest>=8.0
+
+# --- PLAXIS Remote Scripting (CSAK a hallgató PLAXIS-os gépén) ---
+# Ez a PLAXIS telepítéssel jön, NEM pip-ből. A requirements-ben csak emlékeztető:
+# plxscripting   # a Bentley PLAXIS telepítőből érhető el

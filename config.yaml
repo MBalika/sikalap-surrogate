@@ -1,0 +1,170 @@
+# =============================================================================
+#  PLAXIS surrogate — KÖZÖS KONFIGURÁCIÓ  (egyetlen igazságforrás)
+# =============================================================================
+#  Ebbe a fájlba van beírva MINDEN, ami a bemeneteket, kimeneteket és a
+#  talajtípus-korrelációkat definiálja. A Python-kód, a smoke-fixture, az
+#  adatszerződés (DATA_CONTRACT.md) és a web-UI is INNEN veszi a neveket és a
+#  tartományokat. Ha itt átírsz egy tartományt vagy nevet, az egész rendszer
+#  automatikusan követi. Kézzel máshol NE írj át oszlopneveket!
+#
+#  Döntések (2026-07): 9 bemenet (talajtípus-kapcsolóval), drénezett homogén
+#  induló kör, E' = E50ref @ p_ref=100 kPa.
+# =============================================================================
+
+meta:
+  projekt: "PLAXIS 2D HSsmall síkalap surrogate — oktatóeszköz"
+  verzio: "0.1.0"
+  modell: "HSsmall"           # Hardening Soil small-strain
+  dren_allapot: "drained"     # induló kör: drénezett, hosszú távú
+  elemzes: "plane_strain_2D"  # 2D síkalakváltozás → R_k egysége kN/m (folyóméterre)
+
+# -----------------------------------------------------------------------------
+#  BEMENETEK — 9 db (8 folytonos + 1 kategorikus)
+#  A `key` = a CSV oszlopneve (ASCII, ez SOHA nem változik kód közben).
+#  A `jel` / `nev` csak megjelenítéshez (UI, dokumentáció).
+# -----------------------------------------------------------------------------
+inputs:
+  continuous:
+    - key: B
+      jel: "B"
+      nev: "Alapszélesség"
+      egyseg: "m"
+      min: 0.5
+      max: 4.0
+    - key: D
+      jel: "D"
+      nev: "Alapsík mélysége"
+      egyseg: "m"
+      min: 0.4
+      max: 3.0
+    - key: phi
+      jel: "φ'"
+      nev: "Belső súrlódási szög"
+      egyseg: "°"
+      min: 20.0
+      max: 38.0
+    - key: c
+      jel: "c'"
+      nev: "Kohézió"
+      egyseg: "kPa"
+      min: 0.0
+      max: 40.0
+    - key: gamma
+      jel: "γ"
+      nev: "Térfogatsúly"
+      egyseg: "kN/m³"
+      min: 16.0
+      max: 21.0
+    - key: E
+      jel: "E' (=E₅₀ʳᵉᶠ)"
+      nev: "Rugalmassági modulus, referencia szekáns @100 kPa"
+      egyseg: "MPa"
+      min: 5.0
+      max: 60.0
+    - key: GWL
+      jel: "GWL"
+      nev: "Talajvízszint mélysége a terepszinttől"
+      egyseg: "m"
+      min: 0.5
+      max: 8.0
+    - key: alpha
+      jel: "α"
+      nev: "Teherferdeség a függőlegestől"
+      egyseg: "°"
+      min: 0.0
+      max: 25.0
+
+  # Kategorikus 9. bemenet — a surrogate típusonként tanul.
+  categorical:
+    - key: soil_type
+      jel: "Talajtípus"
+      nev: "Talaj fő típusa (a korrelációs kaszkádot ez vezérli)"
+      # A `values` sorrendje EGYBEN a one-hot / kód-sorrend is. Ne told át!
+      values: ["homok", "iszap", "agyag"]
+
+# -----------------------------------------------------------------------------
+#  KIMENETEK — 22 db egy-kimenetű modell
+#    R_k     : törőteher függőleges komponense (kN/m, 2D folyóméterre)
+#    s_max   : süllyedés a törésnél (mm) — ez a p–s görbe utolsó pontja
+#    ps_01..ps_20 : a p–s görbe süllyedés-értékei 20 rögzített teher-szinten
+#                   (p/R_k = 0.05, 0.10, ... 1.00), mind mm-ben.
+#  A p–s pontok a fix load-fraction rácson vannak újramintavételezve, így minden
+#  futás összehasonlítható és minden pont külön (monoton) modellt kap.
+# -----------------------------------------------------------------------------
+outputs:
+  scalars:
+    - key: R_k
+      nev: "Törőteher (függőleges komponens)"
+      egyseg: "kN/m"
+    - key: s_max
+      nev: "Süllyedés a törésnél"
+      egyseg: "mm"
+  ps_curve:
+    key_prefix: "ps_"        # ps_01 ... ps_20
+    n_points: 20
+    # A teher-szintek p/R_k arányban (0.05-től 1.00-ig egyenletesen):
+    load_fractions_start: 0.05
+    load_fractions_end: 1.00
+
+# -----------------------------------------------------------------------------
+#  TALAJTÍPUS-FÜGGŐ HSsmall KORRELÁCIÓK  (derive_hssmall() ezt olvassa)
+#  A 9 bemenetből determinisztikusan áll elő a teljes HSsmall paraméterkészlet.
+#  A surrogate inputtere így 9 dimenziós MARAD — a kibővített készletet nem látja.
+#  Források: Bolton (ψ), Jáky (K0), Benz 2007 (G0), Wichtmann–Triantafyllidis
+#  (γ0.7), Janbu/HS (m). A típusonkénti értékek mérnöki alapértékek — a hallgató
+#  a ti PLAXIS-verziótokban validálja őket.
+# -----------------------------------------------------------------------------
+soil_types:
+  homok:
+    m: 0.50               # feszültségfüggő merevség kitevő (Janbu/HS)
+    Eoed_over_E50: 1.00   # Eoedref / E50ref
+    Eur_over_E50: 3.00    # Euref / E50ref
+    gamma07: 1.0e-4       # nyírási referencia-alakváltozás (small-strain)
+    G0_over_Gur: 2.50     # Benz (2007)
+    nu_ur: 0.20
+    Rf: 0.90
+    dilatancy_from_phi: true   # ψ = max(φ'−30°, 0)  (Bolton) — homokra értelmes
+  iszap:
+    m: 0.65
+    Eoed_over_E50: 0.90
+    Eur_over_E50: 3.00
+    gamma07: 1.5e-4
+    G0_over_Gur: 2.75
+    nu_ur: 0.20
+    Rf: 0.90
+    dilatancy_from_phi: false  # iszap/agyag: ψ ≈ 0
+  agyag:
+    m: 0.90
+    Eoed_over_E50: 0.80
+    Eur_over_E50: 3.00
+    gamma07: 2.0e-4
+    G0_over_Gur: 3.00
+    nu_ur: 0.20
+    Rf: 0.90
+    dilatancy_from_phi: false
+
+# Minden talajtípusra közös, rögzített HSsmall alapértékek:
+hssmall_common:
+  p_ref: 100.0            # kPa — referencia feszültség (E50ref ehhez tartozik)
+  # K0nc = 1 − sin(φ')  (Jáky) — a kódban számoljuk, nem itt.
+
+# -----------------------------------------------------------------------------
+#  MINTAVÉTELEZÉS (sampling.py)
+# -----------------------------------------------------------------------------
+sampling:
+  method: "latin_hypercube"
+  # A folytonos paraméterek LHS-sel, a talajtípus rétegzetten (minden típusra
+  # közel azonos számú minta). A pilot kör kis n-nel indul.
+  n_pilot: 100
+  n_full: 6000
+  seed: 12345
+
+# -----------------------------------------------------------------------------
+#  ML pipeline
+# -----------------------------------------------------------------------------
+ml:
+  test_size: 0.2
+  random_state: 42
+  cv_folds: 5
+  # Kvantilis modellek a bizonytalansági sávhoz (később):
+  quantiles: [0.1, 0.5, 0.9]
